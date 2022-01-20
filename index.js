@@ -1,6 +1,7 @@
 const { MongoClient } = require('mongodb');
 const cors =require('cors');
 const express = require("express");
+const ObjectId = require('mongodb').ObjectId
 require('dotenv').config();
 
 const app =express();
@@ -24,6 +25,7 @@ async function run() {
       const imagescollection = await database.collection('images');
       const productscollection = await database.collection('products');
       const usercollection = await database.collection('user');
+      const latest_interiorscollection = await database.collection('latest_interiors');
       console.log("ok2");
 
 
@@ -41,18 +43,48 @@ async function run() {
             res.json(result)
       })
 
+
+      app.post("/user", async (req, res) => {
+        const user = req.body;
+        const result = await usercollection.insertOne(user)
+        res.json(result);
+
+    })
       app.put('/user' ,async(req,res)=>{
         const user =req.body;
-        const result =usercollection.insertOne(user);
-        res.send(req.body)
+         const filter ={email:user?.email}
+         const option ={upsert:true}
+         const document ={$set:user}
+        const result =usercollection.insertOne(filter,document,option);
+        res.send(result)
         res.json(result);
         
         
       })
-      app.get('/user' ,async(req,res)=>{
+      app.get('/users' ,async(req,res)=>{
+
+        const user =req.body;
+        const filter ={email:user?.email}
 
         
-       
+      })
+      app.get('/latest_interiors' ,async(req,res)=>{
+
+        const query = await latest_interiorscollection.find({})
+        const result =await query.toArray();
+        res.send(result)
+        res.json(result)
+
+        
+      })
+      app.get('/latest_interiors/:id' ,async(req,res)=>{
+         const id =req.params.id;
+         const filter = { _id: ObjectId(id) }
+        const result = await latest_interiorscollection.findOne(filter)
+   
+        res.send(result)
+        res.json(result)
+
         
       })
 
