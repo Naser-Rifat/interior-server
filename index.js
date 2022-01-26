@@ -2,11 +2,12 @@ const { MongoClient } = require("mongodb");
 const cors = require("cors");
 const express = require("express");
 const ObjectId = require("mongodb").ObjectId;
+const { query } = require("express");
 require("dotenv").config();
 
 const app = express();
 
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 7000;
 
 app.use(cors());
 app.use(express.json());
@@ -25,9 +26,11 @@ async function run() {
     const imagescollection = await database.collection("images");
     const productscollection = await database.collection("products");
     const usercollection = await database.collection("user");
+    const orderscollection = await database.collection("orders");
     const latest_interiorscollection = await database.collection(
       "latest_interiors"
     );
+
     console.log("ok2");
 
     app.get("/images", async (req, res) => {
@@ -82,6 +85,7 @@ async function run() {
       res.send(result);
       res.json(result);
     });
+
     app.get("/latest_interiors/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
@@ -91,10 +95,39 @@ async function run() {
       res.json(result);
     });
 
-    // Query for a movie that has the title 'Back to the Future'
-    //   const query = { title: 'Back to the Future' };
-    //   const movie = await movies.findOne(query);
-    //   console.log(movie);
+    app.post("/orders", async (req, res) => {
+      const order = req.body;
+      const result = await orderscollection.insertOne(order);
+      res.send(result);
+      res.json(result);
+    });
+    app.get("/orders", async (req, res) => {
+      const query = await orderscollection.find({});
+      const result = await query.toArray();
+      res.send(result);
+      res.json(result);
+    });
+    app.delete("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log("request id ", id);
+      const filter = { _id: ObjectId(id) };
+      const result = await orderscollection.deleteOne(filter);
+      res.send(result);
+      console.log(result);
+      res.json(result);
+    });
+    app.put("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const status = req.body;
+      console.log("request id ", id);
+      console.log(status);
+      const filter = { _id: ObjectId(id) };
+      const upDoc = { $set: { status: status } };
+      const result = await orderscollection.updateOne(filter, upDoc);
+      res.send(result);
+      console.log(result);
+      res.json(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     //   await client.close();
