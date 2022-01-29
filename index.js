@@ -102,6 +102,14 @@ async function run() {
       res.json(result);
     });
     app.get("/orders", async (req, res) => {
+      const email = req.query.email;
+      const filter = { email: email };
+      const query = await orderscollection.find(filter);
+      const result = await query.toArray();
+      res.send(result);
+      res.json(result);
+    });
+    app.get("/orders/all", async (req, res) => {
       const query = await orderscollection.find({});
       const result = await query.toArray();
       res.send(result);
@@ -118,14 +126,15 @@ async function run() {
     });
     app.put("/orders/:id", async (req, res) => {
       const id = req.params.id;
-      const status = req.body;
-      console.log("request id ", id);
-      console.log(status);
       const filter = { _id: ObjectId(id) };
-      const upDoc = { $set: { status: status } };
-      const result = await orderscollection.updateOne(filter, upDoc);
-      res.send(result);
-      console.log(result);
+      const options = { upsert: true };
+      const doc = {
+        $set: {
+          status: 200,
+        },
+      };
+      const result = await orderscollection.updateOne(filter, doc, options);
+      console.log("counted", result);
       res.json(result);
     });
   } finally {
