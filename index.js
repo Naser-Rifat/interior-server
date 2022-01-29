@@ -30,6 +30,7 @@ async function run() {
     const latest_interiorscollection = await database.collection(
       "latest_interiors"
     );
+    const feedbackcollection = await database.collection("customerfeedback");
 
     console.log("ok2");
 
@@ -40,6 +41,8 @@ async function run() {
       res.send(result);
       res.json(result);
     });
+
+    // products //
     app.get("/productsimages", async (req, res) => {
       const query = await productscollection.find({});
       const result = await query.toArray();
@@ -61,6 +64,8 @@ async function run() {
       res.json(result);
     });
 
+    // products --end//
+
     app.post("/user", async (req, res) => {
       const user = req.body;
       const result = await usercollection.insertOne(user);
@@ -79,6 +84,8 @@ async function run() {
       const user = req.body;
       const filter = { email: user?.email };
     });
+
+    //-- latest -interior -- //
     app.get("/latest_interiors", async (req, res) => {
       const query = await latest_interiorscollection.find({});
       const result = await query.toArray();
@@ -94,6 +101,9 @@ async function run() {
       res.send(result);
       res.json(result);
     });
+    //-- latest -interior -end //
+
+    //-- order --//
 
     app.post("/orders", async (req, res) => {
       const order = req.body;
@@ -101,6 +111,7 @@ async function run() {
       res.send(result);
       res.json(result);
     });
+
     app.get("/orders", async (req, res) => {
       const email = req.query.email;
       const filter = { email: email };
@@ -137,6 +148,22 @@ async function run() {
       console.log("counted", result);
       res.json(result);
     });
+    // order- end--//
+
+    //-- Feedback--//
+    app.post("/feedback", async (req, res) => {
+      const feedback = req.body;
+      const result = await feedbackcollection.insertOne(feedback);
+      res.send(result);
+      res.json(result);
+    });
+    app.get("/feedback", async (req, res) => {
+      const query = await feedbackcollection.find({});
+      const result = await query.toArray();
+      res.send(result);
+      res.json(result);
+    });
+    //-- Feedback--//
   } finally {
     // Ensures that the client will close when you finish/error
     //   await client.close();
