@@ -169,6 +169,11 @@ async function run() {
       res.send(result);
       res.json(result);
     });
+    app.post("/feedback", async (req, res) => {
+      const feedback = req.body;
+      const result = await feedbackcollection.insertOne(feedback);
+      res.json(result);
+    });
     //-- Feedback--//
   } finally {
     // Ensures that the client will close when you finish/error
