@@ -63,6 +63,12 @@ async function run() {
       const result = await productscollection.findOne(filter);
       res.json(result);
     });
+    app.delete("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await productscollection.deleteOne(filter);
+      res.json(result);
+    });
 
     // products --end//
 
