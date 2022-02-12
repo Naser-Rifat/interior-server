@@ -2,7 +2,7 @@ const { MongoClient } = require("mongodb");
 const cors = require("cors");
 const express = require("express");
 const ObjectId = require("mongodb").ObjectId;
-const { query } = require("express");
+// const { query } = require("express");
 const fileUpload = require("express-fileupload");
 require("dotenv").config();
 
@@ -115,13 +115,13 @@ async function run() {
       res.send(result);
       res.json(result);
     });
-    app.get("/user", async (req, res) => {
-      const user = req.body;
-      const findall = await usercollection.find({});
-      const result = await findall.toArray();
-      res.send(result);
-      res.json(result);
-    });
+    // app.get("/user", async (req, res) => {
+    //   const user = req.body;
+    //   const findall = await usercollection.find({});
+    //   const result = await findall.toArray();
+    //   res.send(result);
+    //   res.json(result);
+    // });
 
     app.get("/user/:email", async (req, res) => {
       const email = req.params.email;
