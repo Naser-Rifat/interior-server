@@ -3,6 +3,7 @@ const cors = require("cors");
 const express = require("express");
 const ObjectId = require("mongodb").ObjectId;
 const { query } = require("express");
+const fileUpload = require("express-fileupload");
 require("dotenv").config();
 
 const app = express();
@@ -11,6 +12,7 @@ const port = process.env.PORT || 7000;
 
 app.use(cors());
 app.use(express.json());
+app.use(fileUpload());
 // Replace the following with your MongoDB deployment's connection string.
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.g0xoz.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -47,6 +49,33 @@ async function run() {
       const query = await productscollection.find({});
       const result = await query.toArray();
       res.send(result);
+      res.json(result);
+    });
+    app.post("/products", async (req, res) => {
+      // console.log(req.body);
+      // console.log(req.files);
+      const name = req.body.name;
+      const model = req.body.model;
+      console.log(name);
+      console.log(model);
+      const price = req.body.price;
+      const description = req.body.description;
+      const image = req.files.image;
+      const pic = image.data;
+      console.log(pic);
+      const encodedPic = pic.toString("base64");
+      res.json({ success: true });
+      const imageBuffer = Buffer.from(encodedPic, "base64");
+      const allformdata = {
+        name,
+        model,
+        price,
+        description,
+        image: imageBuffer,
+      };
+      const result = await productscollection.insertOne(allformdata);
+      res.send(result);
+
       res.json(result);
     });
 
@@ -86,9 +115,32 @@ async function run() {
       res.send(result);
       res.json(result);
     });
-    app.get("/users", async (req, res) => {
+    app.get("/user", async (req, res) => {
       const user = req.body;
-      const filter = { email: user?.email };
+      const findall = await usercollection.find({});
+      const result = await findall.toArray();
+      res.send(result);
+      res.json(result);
+    });
+
+    app.get("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const user = await usercollection.findOne(filter);
+      let IsAdmin = false;
+      if (user?.role === "admin") {
+        IsAdmin = true;
+      }
+      res.json({ admin: IsAdmin });
+
+      // const email = req.params.email;
+      // const filter = { email: email }
+      // const user = await userdatacollection.findOne(filter)
+      // let IsAdmin = false;
+      // if (user?.role === 'admin') {
+      //     IsAdmin = true;
+      // }
+      // res.json({ admin: IsAdmin });
     });
 
     //-- latest -interior -- //
