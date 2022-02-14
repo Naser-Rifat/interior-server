@@ -2,14 +2,24 @@ const { MongoClient } = require("mongodb");
 const cors = require("cors");
 const express = require("express");
 const ObjectId = require("mongodb").ObjectId;
-// const { query } = require("express");
+var admin = require("firebase-admin");
+const { query } = require("express");
+const stripe = require("stripe")(
+  "sk_test_51KRz35GbmEtMgWscwSf3PYypQbDLr9wOkR9By7zG53sc8W4bgnIYJ3MXR8WyWH1OAgb1brHFNmZmcZbdZWDdQZEK00qncbUYlA"
+);
 const fileUpload = require("express-fileupload");
 require("dotenv").config();
 
 const app = express();
-
 const port = process.env.PORT || 7000;
 
+//firebase admin intialization
+const serviceAccount = require("./interior-a2fbe-firebase-adminsdk-4g9tm-45f23b69ba.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+//middleware
 app.use(cors());
 app.use(express.json());
 app.use(fileUpload());
@@ -19,6 +29,22 @@ const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
+async function verifyToken(req, res, next) {
+  console.log("i am in verfiy");
+  if (req.headers.authorization?.startsWith("Bearer ")) {
+    const idToken = req.headers.authorization.split(" ")[1];
+    try {
+      const decodeduser = await admin.auth().verifyIdToken(idToken);
+      req.decodedUserEmail = decodeduser.email;
+
+      console.log("decode email", decodeduser.email);
+    } catch {
+      console.log("in th catch");
+    }
+    console.log("show id token", idToken);
+  }
+  next();
+}
 
 async function run() {
   try {
@@ -29,6 +55,7 @@ async function run() {
     const productscollection = await database.collection("products");
     const usercollection = await database.collection("user");
     const orderscollection = await database.collection("orders");
+    const finalorderscollection = await database.collection("finalorders");
     const latest_interiorscollection = await database.collection(
       "latest_interiors"
     );
@@ -170,12 +197,31 @@ async function run() {
       res.json(result);
     });
 
-    app.get("/orders", async (req, res) => {
+    app.get("/orders", verifyToken, async (req, res) => {
       const email = req.query.email;
-      const filter = { email: email };
-      const query = await orderscollection.find(filter);
-      const result = await query.toArray();
-      res.send(result);
+      console.log("order email", email);
+      console.log("decodedUserEmail email", req.decodedUserEmail);
+      if (req.decodedUserEmail === email) {
+        const filter = { email: email };
+        const query = await orderscollection.find(filter);
+        const result = await query.toArray();
+        res.send(result);
+        res.json(result);
+      } else {
+        res.status(401).json({ message: "user not authorized" });
+      }
+    });
+    app.put("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      console.log(id);
+      const filter = { _id: ObjectId(id) };
+      const doc = {
+        $set: {
+          payment: payment,
+        },
+      };
+      const result = await orderscollection.updateOne(filter, doc);
       res.json(result);
     });
     app.get("/orders/all", async (req, res) => {
@@ -206,7 +252,24 @@ async function run() {
       console.log("counted", result);
       res.json(result);
     });
-    // order- end--//
+    //-- order- end--//
+
+    // //--final order--//
+    // app.post("/final/orders", async (req, res) => {
+    //   const orders = req.body;
+    //   const result = await finalorderscollection.insertOne(orders);
+    //   // console.log("counted", result);
+    //   res.json(result);
+    // });
+    // app.get("/finalorders", async (req, res) => {
+    //   const email = req.query.email;
+    //   const filter = { email: email };
+    //   const query = await finalorderscollection.find(filter);
+    //   const result = await query.toArray();
+    //   // console.log("counted", result);
+    //   res.json(result);
+    // });
+    // //--end-final order//
 
     //-- Feedback--//
     app.post("/feedback", async (req, res) => {
@@ -226,7 +289,25 @@ async function run() {
       const result = await feedbackcollection.insertOne(feedback);
       res.json(result);
     });
+
     //-- Feedback--//
+
+    // --payment--//
+    app.post("/create-payment-intent", verifyToken, async (req, res) => {
+      console.log(req.body);
+      const paymentInfo = req.body;
+      console.log(paymentInfo.price);
+      const amount = paymentInfo.price * 100;
+      console.log(amount);
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+      console.log(paymentIntent.client_secret);
+      res.json(paymentIntent.client_secret);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     //   await client.close();
