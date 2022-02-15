@@ -55,6 +55,7 @@ async function run() {
     const productscollection = await database.collection("products");
     const usercollection = await database.collection("user");
     const orderscollection = await database.collection("orders");
+    const productimagescollection = await database.collection("productimages");
     const finalorderscollection = await database.collection("finalorders");
     const latest_interiorscollection = await database.collection(
       "latest_interiors"
@@ -73,7 +74,7 @@ async function run() {
 
     // products //
     app.get("/productsimages", async (req, res) => {
-      const query = await productscollection.find({});
+      const query = await productimagescollection.find({});
       const result = await query.toArray();
       res.send(result);
       res.json(result);
@@ -83,15 +84,14 @@ async function run() {
       // console.log(req.files);
       const name = req.body.name;
       const model = req.body.model;
-      console.log(name);
-      console.log(model);
+
       const price = req.body.price;
       const description = req.body.description;
       const image = req.files.image;
       const pic = image.data;
-      console.log(pic);
+
       const encodedPic = pic.toString("base64");
-      res.json({ success: true });
+
       const imageBuffer = Buffer.from(encodedPic, "base64");
       const allformdata = {
         name,
@@ -102,7 +102,7 @@ async function run() {
       };
       const result = await productscollection.insertOne(allformdata);
       res.send(result);
-
+      // res.json({ success: true });
       res.json(result);
     });
 
@@ -192,6 +192,8 @@ async function run() {
 
     app.post("/orders", async (req, res) => {
       const order = req.body;
+      // console.log(req);
+      // console.log(req.files.image);
       const result = await orderscollection.insertOne(order);
       res.send(result);
       res.json(result);
@@ -239,7 +241,7 @@ async function run() {
       console.log(result);
       res.json(result);
     });
-    app.put("/orders/:id", async (req, res) => {
+    app.put("/orders/update/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
