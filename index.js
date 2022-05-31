@@ -23,7 +23,7 @@ admin.initializeApp({
 app.use(cors());
 app.use(express.json());
 app.use(fileUpload());
-// Replace the following with your MongoDB deployment's connection string.
+//  MongoDB deployment's connection string.
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.g0xoz.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
